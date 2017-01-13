@@ -1,0 +1,440 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--GearVR plugin additions-->
+<root xmlns:android="http://schemas.android.com/apk/res/android">
+	<!-- init section is always evaluated once per architecture -->
+	<trace enable="true"/>
+	<init>
+		<log text="FacebookSDK init"/>		
+	</init>
+
+  <androidManifestUpdates>
+    <addElements tag="application">
+	
+      <meta-data android:name="com.facebook.sdk.ApplicationId" android:value="@string/facebook_app_id"/>
+	  
+	  <activity android:name="com.facebook.FacebookActivity"
+          android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
+          android:label="@string/app_name" />
+
+      <!-- Replace with your Facebook APP_ID -->
+     <provider android:authorities="com.facebook.app.FacebookContentProvider${APP_ID}"
+          android:name="com.facebook.FacebookContentProvider"
+          android:exported="true" />
+		  
+    </addElements>
+
+		
+  </androidManifestUpdates>
+
+  <!-- optional additions to proguard -->
+  <proguardAdditions>
+    <insert><![CDATA[
+      -keep class com.facebook.** {
+      *;
+      }
+      -keepattributes Signature
+      -dontskipnonpubliclibraryclassmembers
+
+     -keepclassmembers class com.epicgames.ue4.GameActivity {
+            public <methods>;
+            public <fields>;
+     }
+    ]]></insert>
+  </proguardAdditions>
+
+  <resourceCopies>
+    <!-- Copy the generated resource file to be packaged -->
+    <copyFile src="$S(PluginDir)/../../lib/Android/res/values/FacebookAppID.xml" dst="$S(BuildDir)/res/values/FacebookAppID.xml" />
+    <copyFile src="$S(PluginDir)/../../lib/Android/bolts-android-1.1.2.jar" dst="$S(BuildDir)/libs/bolts-android-1.1.2.jar" />
+    <!--<copyFile src="$S(PluginDir)/../../lib/Android/bolts-applinks-1.4.0.jar" dst="$S(BuildDir)/libs/bolts-applinks-1.4.0.jar" />-->
+  </resourceCopies>
+
+
+
+  <AARImports>
+    <insertValue value="repository $S(PluginDir)/../../ThirdParty/repository"/>
+    <insertNewline/>
+    <insert>com.facebook,Facebook,4.18.0</insert>
+    <insertNewline/>
+  </AARImports>
+  
+  <!-- optional additions to the GameActivity imports in GameActivity.java -->
+	<gameActivityImportAdditions>
+	<insert>
+    import com.facebook.FacebookSdk;
+    import com.facebook.appevents.AppEventsLogger;
+	  import com.facebook.login.LoginResult;
+	  import com.facebook.login.LoginManager;
+	  import com.facebook.FacebookCallback;
+	  import com.facebook.CallbackManager;
+	  import com.facebook.FacebookException;
+	  import com.facebook.AccessToken;
+    import com.facebook.share.model.AppInviteContent;
+    import com.facebook.share.widget.AppInviteDialog;
+    import com.facebook.share.model.SharePhoto;
+    import com.facebook.share.model.SharePhotoContent;
+    import com.facebook.share.model.ShareLinkContent;
+    import com.facebook.share.widget.ShareDialog;
+    import com.facebook.AccessTokenTracker;
+    import com.facebook.HttpMethod;
+    import com.facebook.Profile;
+    import com.facebook.ProfileTracker;
+    //import com.facebook.applinks.AppLinkData;
+    //import bolts.AppLinks;
+    //import bolts.AppLink;
+    //import bolts.Task;
+    //import bolts.Bolts;
+	  
+	  import java.util.HashSet;
+	  import java.util.Arrays;
+	  import android.text.TextUtils;
+    import android.graphics.BitmapFactory; 
+    import android.os.Handler; 
+
+    </insert>
+	</gameActivityImportAdditions>
+	
+
+	<!-- optional additions to the GameActivity class in GameActivity.java -->
+	<gameActivityClassAdditions>
+	<insert>
+    <![CDATA[
+   private ShareDialog shareDialog;
+   
+   private CallbackManager callbackManager;
+   private AccessTokenTracker accessTokenTracker;
+   private ProfileTracker profileTracker;
+   private AccessToken accessToken;
+   private AccessToken accessTokennull = null;
+   private Profile profile;
+   private Profile profilenull;
+   //private AppLinks appLinks;
+   //private AppLinkData appLinkData;
+   
+   //private AppEventsLogger appEventsLogger;
+
+   String appLinkUrl = "";//Replace with your applinkUrl
+
+    String previewImageUrl = "";////Repplace with your previewImageUrl
+	
+  //
+  public String AndroidThunkJava_FacebookDK_GetAccessTokenExpirationDate()
+  {
+	  return AccessToken.getCurrentAccessToken().getExpires().toString();
+  }
+  
+  public String AndroidThunkJava_FacebookSDK_GetUserId()
+  {
+	  return AccessToken.getCurrentAccessToken().getUserId();
+  }
+  
+  //
+  
+   public boolean AndroidThunkJava_FacebookSDK_isLoggedIn()
+  {
+    // If the access token is available already assign it.
+    //accessToken = AccessToken.getCurrentAccessToken();
+    
+    boolean bIsLoggedIn = false;
+  
+    if (Profile.getCurrentProfile() != null &&  AccessToken.getCurrentAccessToken() !=null){
+    
+    bIsLoggedIn = true;
+
+	   Log.debug("FacebookSDK_isLoggedIn =  true1");
+    
+    }
+   
+	   Log.debug("FacebookSDK_isLoggedIn =" + bIsLoggedIn);
+     
+     return bIsLoggedIn;
+  
+  }
+  
+  public void AndroidThunkJava_FacebookSDK_Login()
+  {
+    // If the access token is available already assign it.
+    //accessToken = AccessToken.getCurrentAccessToken();
+  
+    if (Profile.getCurrentProfile() == null){
+    LoginManager.getInstance().logInWithReadPermissions(this, Arrays.asList("public_profile", "email","user_friends"));
+	   Log.debug("logInWithReadPermissions");
+    
+    }
+     //LoginManager.getInstance().logInWithReadPermissions(this, Arrays.asList("public_profile", "email","user_friends"));
+	   Log.debug("logInWithReadPermissions2");
+  
+  }
+  
+   public void AndroidThunkJava_FacebookSDK_Logout()
+  {
+    LoginManager.getInstance().logOut();
+    
+    //AccessToken.setCurrentAccessToken(null);
+    Profile.setCurrentProfile(profilenull);
+    AccessToken.setCurrentAccessToken(accessTokennull);
+    
+    
+     Log.debug("logOut");
+
+    //AccessToken.setCurrentAccessToken(null);
+  
+  }
+  
+  public String AndroidThunkJava_FacebookGetAccessToken()
+  {
+    Log.debug("return AccessToken");
+	  return AccessToken.getCurrentAccessToken().getToken();
+    //return accessToken;
+    
+  }
+  
+   public void AndroidThunkJava_FacebookSDK_AppInvite()
+  {
+     if (AppInviteDialog.canShow()) 
+     {
+        AppInviteContent content = new AppInviteContent.Builder()
+                .setApplinkUrl(appLinkUrl)
+                .setPreviewImageUrl(previewImageUrl)
+                .build();
+        AppInviteDialog.show(this, content);
+    }
+	      Log.debug("FacebookSDK_AppInvite"); 
+  }
+  
+  
+  
+  public void AndroidThunkJava_FacebookSDK_SharePhoto(String AppName, String Filename)
+  {
+  Log.debug("FacebookSDK_SharePhoto"); 
+  Bitmap image = BitmapFactory.decodeFile(getScreenshot(AppName, Filename).getAbsolutePath());
+  SharePhoto sharePhoto = new SharePhoto.Builder().setBitmap(image).build();
+  Log.debug("FacebookSDK_SharePhoto1");
+  ArrayList<SharePhoto> photos = new ArrayList();
+  photos.add(sharePhoto);
+  Log.debug("FacebookSDK_SharePhotoArrayList");
+  SharePhotoContent sharePhotoContent = new SharePhotoContent.Builder().setPhotos(photos).build();
+  shareDialog.show(sharePhotoContent);
+  Log.debug("FacebookSDK_ShareDialog"); 
+      
+  }
+  
+  public File getScreenshot(String AppName, String Filename)
+  {
+  
+   File dirpath = new File(Environment.getExternalStorageDirectory().getPath());//file provider
+      //Log.debug("dirpath is" + "/" + dirpath.toString() + dirpath.exists());
+
+      //File picFile = new File(dirpath.getPath(), "UE4Game" +"/" + "Test_4_14" + "/" + "Test_4_14" + "/" + "Saved/Screenshots/Android" + "/" + "MyGame.png");
+      File picFile = new File(dirpath.getPath(), "UE4Game" +"/" + AppName + "/" + AppName + "/" + "Saved/Screenshots/Android" + "/" + Filename);
+      //Log.debug("picFile is" + "/" + picFile.toString() + picFile.exists());
+      Log.debug("picFile is" + "/" + AppName + Filename);
+      
+      return picFile;
+  
+  }
+  
+ 
+	public native void nativeFacebookOnLoginComplete();
+  public native void nativeFacebookOnLoginCancelled();
+  public native void nativeFacebookOnLoginError(String error);
+
+    
+    ]]></insert>
+	</gameActivityClassAdditions>
+	
+	<!-- optional additions to GameActivity onCreate metadata reading in GameActivity.java -->
+	<gameActivityReadMetadataAdditions>
+	<insert>
+
+  </insert>
+	</gameActivityReadMetadataAdditions>
+	
+	<!-- optional additions to GameActivity onCreate in GameActivity.java -->
+	<gameActivityOnCreateAdditions>
+	<insert><![CDATA[
+    // Initialize the SDK before executing any other operations,
+    FacebookSdk.sdkInitialize(getApplicationContext());
+	
+	FacebookSdk.setIsDebugEnabled(true);
+	//FacebookSdk.addLoggingBehavior(LoggingBehavior.APP_EVENTS);
+  
+  //AppEventsLogger appEventsLogger = AppEventsLogger.newLogger(this);
+	
+    AppEventsLogger.activateApp(getApplication());
+	//AppEventsLogger.logPurchase(BigDecimal.valueOf(4.32), Currency.getInstance("USD"));
+	Log.debug("FacebookSdk.sdkInitialize");
+  
+  shareDialog = new ShareDialog(this);
+
+    callbackManager = CallbackManager.Factory.create();
+    
+     accessTokenTracker = new AccessTokenTracker() {
+        @Override
+        protected void onCurrentAccessTokenChanged(
+            AccessToken oldAccessToken,
+            AccessToken currentAccessToken) {
+                // Set the access token using 
+                // currentAccessToken when it's loaded or set.
+                AccessToken.setCurrentAccessToken(currentAccessToken);
+                //accessToken = currentAccessToken;
+                //Log.debug("AccessToken = " + AccessToken.getCurrentAccessToken().getToken()); 
+        }
+    };
+    // If the access token is available already assign it.
+    //accessToken = AccessToken.getCurrentAccessToken();
+    
+   //profile = new Profile();
+    
+    
+    profileTracker = new ProfileTracker() {
+        @Override
+        protected void onCurrentProfileChanged(
+                Profile oldProfile,
+                Profile currentProfile) {
+            // App code
+            Profile.setCurrentProfile(currentProfile);
+            Log.debug("Profile = " +  Profile.getCurrentProfile()); 
+        }
+    };
+    profileTracker.startTracking();
+    
+    
+    LoginManager.getInstance().registerCallback(callbackManager,
+	new FacebookCallback<LoginResult>() 
+	{
+	    @Override
+	    public void onSuccess(LoginResult loginResult) 
+	    {
+	    	nativeFacebookOnLoginComplete();
+	        Log.debug("Successful Facebook login");
+	    }
+	    @Override
+	    public void onCancel() 
+	    {
+	    	nativeFacebookOnLoginCancelled();
+	        Log.debug("Cancelled Facebook login");
+	    }
+	    @Override
+	    public void onError(FacebookException exception) 
+	    {
+      /*
+      try{}
+      catch(FacebookException e){ 
+      
+      Log.debug("Error on Facebook login" + e.toString());
+      }
+      */
+      nativeFacebookOnLoginError(exception.toString());
+			Log.debug("Error on Facebook login2" + exception.toString());
+      
+    }
+    });
+    
+    /*
+    appLinkData = AppLinkData.createFromActivity(this);
+    
+    Uri targetUrl = AppLinks.getTargetUrlFromInboundIntent(this, getIntent());
+    if (targetUrl != null) {
+        Log.debug("App Link Target URL: " + targetUrl.toString());
+    } else {
+        appLinkData.fetchDeferredAppLinkData(
+            this, 
+            new AppLinkData.CompletionHandler() {
+                @Override
+                public void onDeferredAppLinkDataFetched(AppLinkData appLinkData) {
+                    //process applink data
+                    Log.debug("App Link Data: " );
+                }
+            });
+            Log.debug("App Link Data: 2" );
+    }
+    */
+    /////
+    /*
+    new Handler().postDelayed(new Runnable() {
+        @Override
+        public void run() {
+
+
+            if (AccessToken.getCurrentAccessToken() != null) {
+                Log.debug("facebook already logged in");
+                 LoginManager.getInstance().logOut();
+                 Log.debug("Log out of Facebook");
+                
+            }
+
+
+        }
+    }, 100);
+    */
+    
+    ///
+	
+	  
+	]]></insert>
+	</gameActivityOnCreateAdditions>
+
+	<!-- optional additions to GameActivity onDestroy in GameActivity.java -->
+	<gameActivityOnDestroyAdditions>
+		<insert>
+     accessTokenTracker.stopTracking();
+		 profileTracker.stopTracking();
+		</insert>
+	</gameActivityOnDestroyAdditions>
+	
+	
+	<!-- optional additions to GameActivity onStart in GameActivity.java -->
+	<gameActivityOnStartAdditions>
+		<insert>
+		
+		</insert>
+	</gameActivityOnStartAdditions>
+
+	<!-- optional additions to GameActivity onStop in GameActivity.java -->
+	<gameActivityOnStopAdditions>
+		<insert>
+		
+		</insert>
+	</gameActivityOnStopAdditions>
+	
+
+	<!-- optional additions to GameActivity onPause in GameActivity.java	-->
+	<gameActivityOnPauseAdditions>
+		<insert>
+		// Call the 'deactivateApp' method to log an app event for use in analytics and advertising reporting.
+        //AppEventsLogger.deactivateApp(getApplication());
+		</insert>
+	</gameActivityOnPauseAdditions>
+
+
+	<!-- optional additions to GameActivity onResume in GameActivity.java	-->
+	<gameActivityOnResumeAdditions>
+		<insert>
+		// Call the 'deactivateApp' method to log an app event for use in analytics and advertising reporting.
+        //AppEventsLogger.deactivateApp(getApplication());
+		</insert>
+	</gameActivityOnResumeAdditions>
+
+
+	<!-- optional additions to GameActivity onActivityResult in GameActivity.java -->
+	<gameActivityOnActivityResultAdditions>
+		<insert>
+	    if (callbackManager != null)
+	    {
+		   callbackManager.onActivityResult(requestCode, resultCode, data);
+	    }
+		</insert>
+    </gameActivityOnActivityResultAdditions>
+	
+
+	<!-- optional libraries to load in GameActivity.java before libUE4.so -->
+	<soLoadLibrary>
+		<!-- need this if plugin enabled and supported architecture, even if not packaged for GearVR -->
+	<!-- 	<if condition="bSupported">
+			<true>
+				<loadLibrary name="vrapi" failmsg="GearVR library not loaded and required!" />
+			</true>
+		</if> -->
+	</soLoadLibrary>
+</root>
