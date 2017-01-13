@@ -1,0 +1,23 @@
+{
+	"FileVersion": 1,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "FacebookSDK",
+	"Description": "This plugin enables Login, App Invite, and Sharing Photo, functionality for Facebook Platform.",
+	"Category": "Advertising",
+	"CreatedBy": "Pandora Entertainment Ltd.",
+	"CreatedByURL": "www.pandoraentertainment.co.uk",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"Modules": [
+		{
+			"Name": "FacebookSDK",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"EnabledByDefault": false,
+	"CanContainContent": false,
+	"IsBetaVersion": false,
+	"Installed": false
+}
